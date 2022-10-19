@@ -11,15 +11,12 @@ import pandas as pd
 from functools import reduce
 
 
-
 class ResGCNLayer(nn.Module):
-    def __init__(self, in_feats, out_feats, num_rels=64*21, activation=F.relu, loop=False,
-                 residual=True, batchnorm=True):
+    def __init__(self, in_feats, out_feats, activation=F.relu, residual=True, batchnorm=True):
         super(ResGCNLayer, self).__init__()
 
         self.activation = activation
-        self.graph_conv_layer = GraphConv(in_feats, out_feats,
-                                                bias=True, activation=activation)
+        self.graph_conv_layer = GraphConv(in_feats, out_feats, bias=True, activation=activation)
         self.residual = residual
         if residual:
             self.res_connection = nn.Linear(in_feats, out_feats)
@@ -99,7 +96,7 @@ class WeightAndSum(nn.Module):
             )
 
 class MTGL_ADMET(nn.Module):
-    def __init__(self, in_feats,hidden_feats,gnn_out_feats=64,n_tasks=None, num_experts=None, return_mol_embedding=False, return_weight=False,loop=False,
+    def __init__(self, in_feats,hidden_feats,gnn_out_feats=64,n_tasks=None,  return_weight=False,
                  classifier_hidden_feats=128, dropout=0.):
         super(MTGL_ADMET, self).__init__()
 
@@ -107,8 +104,6 @@ class MTGL_ADMET(nn.Module):
         self.task_num = n_tasks
         self.return_weight = return_weight
         self.weighted_sum_readout = WeightAndSum(gnn_out_feats, self.task_num, return_weight=self.return_weight)
-        self.num_experts = 5
-        self.num_gates = 4
 
         # Two-layer GCN
         self.conv1 = ResGCNLayer(in_feats, hidden_feats)
@@ -138,28 +133,30 @@ class MTGL_ADMET(nn.Module):
         else:
             feats_list = self.weighted_sum_readout(bg, node_feats)
 
+        # Number of Auxiliary tasks
+        num_gates = 4
+        # gate input
         combine = []
         bg.ndata['h'] = node_feats
         hg = dgl.mean_nodes(bg, 'h')
 
-        num_gates = self.num_gates
         for i in range(num_gates):
 
-            x = feats_list[i]
-            x_1 = torch.unsqueeze(x, dim=1)
-            y = feats_list[num_gates]
-            y_1 = torch.unsqueeze(y,dim=1)
-            w = torch.cat((x_1, y_1), dim=1)
+            auxi = feats_list[i]
+            auxi_u = torch.unsqueeze(auxi, dim=1)
+            prim = feats_list[num_gates]
+            prim_u = torch.unsqueeze(prim,dim=1)
+            gating_f = torch.cat((auxi_u, prim_u), dim=1)
             gate = self.gates[i](hg)
             gate = F.softmax(gate, dim=-1)
             gate = torch.unsqueeze(gate, dim=-1)
-            m = torch.sum(w * gate, dim=1)
-            combine.append(m)
-        combine_1 = combine[0]+combine[1]+combine[2]+combine[3]
-        combine_2 = []
+            gating_r = torch.sum(gating_f * gate, dim=1)
+            combine.append(gating_r)
+        gating_combine = combine[0]+combine[1]+combine[2]+combine[3]
 
+        combine_2 = []
         combine_2.append(feats_list[0])
-        combine_2.append(combine_1)
+        combine_2.append(gating_combine)
         combine_2.append(feats_list[1])
         combine_2.append(feats_list[2])
         combine_2.append(feats_list[3])
