@@ -17,7 +17,7 @@ Obtain graph data
 
 Running
 ```sh
-python create_data.py
+python create_graph_data.py
 ```
 
 # Acknowledgements
