@@ -20,6 +20,13 @@ Running
 python create_graph_data.py
 ```
 
+## 3. Running
+
+```sh
+python Training.py
+```
+Here, we used ‘CYP2C9’ as the example. As for other ADMET endpoints, the model can be adapted by the auxiliary tasks.
+
 # Acknowledgements
 Part of the code was adopted from [1].
 
