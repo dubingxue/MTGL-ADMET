@@ -9,7 +9,6 @@ A Multi-Task Graph Learning framework for predicting multiple ADMET properties o
 + pandas == 1.2.0
 + numpy == 1.20.2
 + rdikt 
-+ Jupyter Notebook
 
 
 ## 2. Create data 
