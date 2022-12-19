@@ -11,6 +11,15 @@ A Multi-Task Graph Learning framework for predicting multiple ADMET properties o
 + rdikt 
 + Jupyter Notebook
 
+
+## 2. Create data 
+Obtain graph data
+
+Running
+```sh
+python create_data.py
+```
+
 # Acknowledgements
 Part of the code was adopted from [1].
 
