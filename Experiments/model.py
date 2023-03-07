@@ -89,7 +89,7 @@ class MTGL_ADMET(nn.Module):
         self.return_weight = return_weight
         self.weighted_sum_readout = WeightAndSum(gnn_out_feats, self.task_num, return_weight=self.return_weight)
 
-        # Two-layer GCN
+        # Two-layer ResGCN
         self.conv1 = ResGCNLayer(in_feats, hidden_feats)
         self.conv2 = ResGCNLayer(hidden_feats, gnn_out_feats)
 
@@ -145,7 +145,7 @@ class MTGL_ADMET(nn.Module):
         Pri_cen.append(feats_list[2])
         Pri_cen.append(feats_list[3])
 
-        # FC
+        # Multi-task predictor
         for i in range(self.task_num):
             mol_feats = Pri_cen[i]
             h1 = self.fc_layers1[i](mol_feats)
