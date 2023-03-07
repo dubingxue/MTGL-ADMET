@@ -26,23 +26,7 @@ class ResGCNLayer(nn.Module):
             self.bn_layer = nn.BatchNorm1d(out_feats)
 
     def forward(self, bg, node_feats):
-        """Update atom representations
-        Parameters
-        ----------
-        bg : BatchedDGLGraph
-            Batched DGLGraphs for processing multiple molecules in parallel
-        node_feats : FloatTensor of shape (N, M1)
-            * N is the total number of atoms in the batched graph
-            * M1 is the input atom feature size, must match in_feats in initialization
-        etype: int
-            bond type
-        norm: torch.Tensor
-            Optional edge normalizer tensor. Shape: :math:`(|E|, 1)`
-        Returns
-        -------
-        new_feats : FloatTensor of shape (N, M2)
-            * M2 is the output atom feature size, must match out_feats in initialization
-        """
+        
         new_feats = self.graph_conv_layer(bg, node_feats)
         if self.residual:
             res_feats = self.activation(self.res_connection(node_feats))
