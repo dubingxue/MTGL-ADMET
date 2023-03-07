@@ -138,16 +138,16 @@ class MTGL_ADMET(nn.Module):
             combine.append(gating_r)
         gating_combine = combine[0]+combine[1]+combine[2]+combine[3]
 
-        combine_2 = []
-        combine_2.append(feats_list[0])
-        combine_2.append(gating_combine)
-        combine_2.append(feats_list[1])
-        combine_2.append(feats_list[2])
-        combine_2.append(feats_list[3])
+        Pri_cen = []
+        Pri_cen.append(feats_list[0])
+        Pri_cen.append(gating_combine)
+        Pri_cen.append(feats_list[1])
+        Pri_cen.append(feats_list[2])
+        Pri_cen.append(feats_list[3])
 
         # FC
         for i in range(self.task_num):
-            mol_feats = combine_2[i]
+            mol_feats = Pri_cen[i]
             h1 = self.fc_layers1[i](mol_feats)
             h2 = self.fc_layers2[i](h1)
             predict = self.output_layer1[i](h2)
