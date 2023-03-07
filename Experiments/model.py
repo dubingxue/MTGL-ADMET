@@ -4,7 +4,6 @@ import dgl
 import numpy as np
 import random
 from dgl.readout import sum_nodes
-from dgl.nn.pytorch.conv import RelGraphConv
 from dgl.nn.pytorch.conv import GraphConv
 from torch import nn
 import pandas as pd
