@@ -8,7 +8,7 @@ A Multi-Task Graph Learning framework for predicting multiple ADMET properties o
 + scikit-learn == 0.24.2
 + pandas == 1.2.0
 + numpy == 1.20.2
-+ rdikt 
++ rdkit 
 
 
 ## 2. Create data 
