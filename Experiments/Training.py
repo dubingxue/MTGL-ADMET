@@ -27,8 +27,10 @@ args['data_name'] = 'admet'
 args['times'] = 10
 
 # selected task, generate select task index, task class, and classification_num
-args['select_task_list'] = ['Respiratory toxicity','CYP2C9', 'CYP2D6', 'Caco-2 permeability','PPB']  # change
+args['select_task_list'] = ['Respiratory toxicity','CYP2C9', 'CYP2D6', 'Caco-2 permeability','PPB']  # task_c first, and then task_r
 args['select_task_index'] = []
+PRIMARY_TASK = 'CYP2C9'  # change
+PRIMARY_TASK_INDEX = args['select_task_list'].index(PRIMARY_TASK)
 args['classification_num'] = 0
 args['regression_num'] = 0
 args['all_task_list'] = ['HIA','OB','p-gp inhibitor','p-gp substrates',	'BBB',
@@ -42,10 +44,10 @@ for index, task in enumerate(args['all_task_list']):
         args['select_task_index'].append(index)
 # generate classification_num
 for task in args['select_task_list']:
-    if task in ['Respiratory toxicity','CYP2C9', 'CYP2D6']:
-        args['classification_num'] = args['classification_num'] + 1
-    if task in ['Caco-2 permeability','PPB']:
+    if task in ("Caco-2 permeability","PPB","Acute oral toxicity (LD50)","IGC50","ESOL","logD"):
         args['regression_num'] = args['regression_num'] + 1
+    else:
+        args['classification_num'] = args['classification_num'] + 1
 
 # generate classification_num
 if args['classification_num'] != 0 and args['regression_num'] != 0:
@@ -82,7 +84,7 @@ for time_id in range(args['times']):
     pos_weight_np = pos_weight(train_set, classification_num=args['classification_num'])
     loss_criterion_c = torch.nn.BCEWithLogitsLoss(reduction='none', pos_weight=pos_weight_np.to(args['device']))
     loss_criterion_r = torch.nn.MSELoss(reduction='none')
-    model = MTGL_ADMET(in_feats=40, hidden_feats=64,n_tasks=task_number,classifier_hidden_feats=64, dropout=0.2)
+    model = MTGL_ADMET(PRIMARY_TASK_INDEX, in_feats=40, hidden_feats=64,n_tasks=task_number,classifier_hidden_feats=64, dropout=0.2)
     optimizer = Adam(model.parameters(), lr=0.001, weight_decay=10**-5)
     stopper = EarlyStopping(patience=args['patience'], task_name=args['task_name'], mode=args['mode'])
     model.to(args['device'])
