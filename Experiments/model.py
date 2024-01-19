@@ -79,11 +79,11 @@ class WeightAndSum(nn.Module):
             )
 
 class MTGL_ADMET(nn.Module):
-    def __init__(self, in_feats,hidden_feats,gnn_out_feats=64,n_tasks=None,  return_weight=False,
+    def __init__(self, prim_index, in_feats,hidden_feats,gnn_out_feats=64,n_tasks=None,  return_weight=False,
                  classifier_hidden_feats=128, dropout=0.):
         super(MTGL_ADMET, self).__init__()
 
-
+        self.prim_index = prim_index
         self.task_num = n_tasks
         self.return_weight = return_weight
         self.weighted_sum_readout = WeightAndSum(gnn_out_feats, self.task_num, return_weight=self.return_weight)
@@ -94,7 +94,10 @@ class MTGL_ADMET(nn.Module):
 
         self.gates = nn.ModuleList()
         for i in range(self.task_num):
-            self.gates.append(nn.Linear(64, 2))
+            if i == self.prim_index:
+                self.gates.append(None)
+            else:
+                self.gates.append(nn.Linear(64, 2))
 
         self.fc_in_feats = gnn_out_feats
         for i in range(self.task_num):
@@ -116,33 +119,37 @@ class MTGL_ADMET(nn.Module):
         else:
             feats_list = self.weighted_sum_readout(bg, node_feats)
 
-        # Number of Auxiliary tasks
-        num_gates = 4
         # gate input
         combine = []
         bg.ndata['h'] = node_feats
         hg = dgl.mean_nodes(bg, 'h')
 
-        for i in range(num_gates):
+        prim = feats_list[self.prim_index]
+        prim_u = torch.unsqueeze(prim,dim=1)
+
+        for i in range(self.task_num):
+
+            if i == self.prim_index:
+                continue
 
             auxi = feats_list[i]
             auxi_u = torch.unsqueeze(auxi, dim=1)
-            prim = feats_list[num_gates]
-            prim_u = torch.unsqueeze(prim,dim=1)
+
             gating_f = torch.cat((auxi_u, prim_u), dim=1)
             gate = self.gates[i](hg)
             gate = F.softmax(gate, dim=-1)
             gate = torch.unsqueeze(gate, dim=-1)
             gating_r = torch.sum(gating_f * gate, dim=1)
             combine.append(gating_r)
-        gating_combine = combine[0]+combine[1]+combine[2]+combine[3]
+
+        gating_combine = sum(combine)
 
         Pri_cen = []
-        Pri_cen.append(feats_list[0])
-        Pri_cen.append(gating_combine)
-        Pri_cen.append(feats_list[1])
-        Pri_cen.append(feats_list[2])
-        Pri_cen.append(feats_list[3])
+        for i in range(self.task_num):
+            if i == self.prim_index:
+                Pri_cen.append(gating_combine)
+            else:
+                Pri_cen.append(feats_list[i])
 
         # Multi-task predictor
         for i in range(self.task_num):
